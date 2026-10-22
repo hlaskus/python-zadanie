@@ -1,4 +1,7 @@
 import argparse
+from pathlib import Path
+
+from csv_handler import create_csv, read_csv
 
 DNI = ['pn', 'wt', 'sr', 'czw', 'pt', 'sb', 'nd']
 DNI_RANGE = [DNI[i] + '-' + DNI[j] for i in range(len(DNI)) for j in range(i + 1, len(DNI))]
@@ -15,7 +18,7 @@ def str_to_dni(s: str) -> list[str]:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Tworzenie lub odczyt plików CSV/JSON.'
+        description='Tworzenie lub odczyt plików CSV.'
     )
     parser.add_argument("-m", choices=MIESIACE, nargs='+', required=True,
                         help='Miesiące w podanej kolejności (np. sty lut).')
@@ -26,9 +29,6 @@ def parse_args():
                              'w = wieczorem. Brakujące pory: r.')
     parser.add_argument("-t", action="store_true",
                         help='Tworzenie plików; bez tej flagi: odczyt.')
-    parser.add_argument("-f", "--format", choices=['csv', 'json'], default='csv',
-                        help='Format plików (domyślnie: csv).')
-
     args = parser.parse_args()
 
     if len(args.m) != len(args.d):
@@ -45,3 +45,16 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    directories = []
+    data_root = Path(__file__).resolve().parent / 'dane'
+    day_index = 0
+
+    for month, day_range in zip(args.m, args.d):
+        for day in str_to_dni(day_range):
+            directories.append(data_root / month / day / args.p[day_index])
+            day_index += 1
+
+    if args.t:
+        create_csv(directories)
+    else:
+        read_csv(directories)
